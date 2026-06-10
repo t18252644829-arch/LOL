@@ -112,6 +112,29 @@ def test_missing_fields_are_omitted():
     assert "champion" not in d
 
 
+def test_split_champion_period():
+    from lol_coach.batch import split_champion_period
+    assert split_champion_period("武器大师6.10-6.20") == ("武器大师", "6.10-6.20")
+    assert split_champion_period("亚索 6.10-6.20") == ("亚索", "6.10-6.20")
+    assert split_champion_period("武器大师") == ("武器大师", None)
+
+
+def test_trend_direction_and_sort():
+    from lol_coach.trend import build_trends
+    summaries = [
+        {"champion": "武器大师", "period": "6.20-6.30", "games": 5, "wins": 4,
+         "winrate": "80%", "avg_cs_diff": 5, "avg_kp": 45, "avg_gold_diff": 300},
+        {"champion": "武器大师", "period": "6.10-6.20", "games": 3, "wins": 1,
+         "winrate": "33%", "avg_cs_diff": -22, "avg_kp": 22, "avg_gold_diff": -600},
+    ]
+    t = build_trends(summaries)["武器大师"]
+    assert t["total_games"] == 8 and t["total_wins"] == 5
+    # 按周期升序:6.10 在前、6.20 在后
+    assert [p["period"] for p in t["periods"]] == ["6.10-6.20", "6.20-6.30"]
+    # 补刀差 -22 -> 5,越高越好 => 变好
+    assert "变好" in t["trend"]["补刀差"]
+
+
 if __name__ == "__main__":
     import traceback
 
