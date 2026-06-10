@@ -6,14 +6,14 @@ if "%~1"=="" (
   pause
   exit /b
 )
-where python
+py -3.12 --version
 if errorlevel 1 (
-  echo [错误] 没找到 Python，请先运行 安装依赖.bat。
-  pause
-  exit /b
+  set RUN=python
+) else (
+  set RUN=py -3.12
 )
 echo ====== 正在识别：%~1 ======
-python -m lol_coach.extract "%~1"
+%RUN% -m lol_coach.extract "%~1"
 echo.
 echo 上面的 JSON 已存到 data\matches\ 文件夹，复制发给对话即可。
 pause
