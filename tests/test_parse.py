@@ -247,10 +247,18 @@ def test_meta_url_and_parse():
     assert parsed["winrate"] == 51.2 and parsed["games"] == 12000
     # 未知结构应给出校准提示
     assert "_note" in parse_meta({"weird": 1})
-    # 注入 getter
+    # 注入 http,模拟 JSON 返回
     got = fetch_meta("24", "top", "14.10",
-                     getter=lambda url, timeout=25: {"header": {"wr": 50}})
+                     http=lambda url, timeout=25: {"status": 200,
+                         "content_type": "application/json",
+                         "body": '{"header": {"wr": 50}}', "url": url})
     assert got["winrate"] == 50 and "url" in got
+    # 非JSON返回应给诊断而不崩
+    diag = fetch_meta("24", "top", "14.10",
+                      http=lambda url, timeout=25: {"status": 404,
+                          "content_type": "text/html",
+                          "body": "<html>not found</html>", "url": url})
+    assert "_note" in diag and diag["status"] == 404
 
 
 def test_vtt_to_text():
