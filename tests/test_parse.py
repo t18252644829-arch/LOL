@@ -135,6 +135,53 @@ def test_trend_direction_and_sort():
     assert "变好" in t["trend"]["补刀差"]
 
 
+def test_weakness_and_search_plan():
+    from lol_coach.learn.weakness import derive_weaknesses, build_search_plan
+    summary = {"champion": "武器大师", "avg_kp": 22.2,
+               "avg_cs_diff": -22, "avg_gold_diff": -600}
+    ws = derive_weaknesses(summary)
+    keys = [w["key"] for w in ws]
+    assert "参团率低" in keys and "补刀落后" in keys and "经济落后" in keys
+    # 补刀落后(severity 22)应排在参团率低(severity 22.8?)附近且都在前
+    plan = build_search_plan(summary)
+    assert plan[0]["queries"], "应生成具体搜索词"
+    assert any("武器大师" in q for q in plan[0]["queries"])  # 英雄名已填入
+
+
+def test_search_plan_fallback_when_no_weakness():
+    from lol_coach.learn.weakness import build_search_plan
+    plan = build_search_plan({"champion": "亚索", "avg_kp": 60,
+                              "avg_cs_diff": 10, "avg_gold_diff": 500})
+    assert len(plan) == 1 and plan[0]["weakness"] == "进阶提升"
+
+
+def test_recommend_orchestration_with_fake_search():
+    from lol_coach.learn.recommend import recommend
+    calls = []
+
+    def fake(query, source="bili", limit=5):
+        calls.append((query, source))
+        return [{"title": f"{query}-{source}", "url": f"u/{query}/{source}",
+                 "uploader": "up", "duration": 600, "views": 1000, "source": source}]
+
+    summary = {"champion": "武器大师", "avg_cs_diff": -22}
+    result = recommend(summary, ["bili", "youtube"], per=3, searcher=fake)
+    assert result["sections"], "应有推荐分区"
+    assert all("videos" in s for s in result["sections"])
+    assert calls, "应调用了搜索"
+
+
+def test_vtt_to_text():
+    from lol_coach.learn.subtitles import _vtt_to_text
+    vtt = (
+        "WEBVTT\n\n1\n00:00:01.000 --> 00:00:03.000\n大家好今天讲补刀\n"
+        "2\n00:00:03.000 --> 00:00:05.000\n大家好今天讲补刀\n"   # 重复行
+        "3\n00:00:05.000 --> 00:00:07.000\n第一点是补兵节奏\n"
+    )
+    text = _vtt_to_text(vtt)
+    assert text == "大家好今天讲补刀 第一点是补兵节奏"
+
+
 if __name__ == "__main__":
     import traceback
 

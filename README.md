@@ -113,8 +113,28 @@ python tests/test_parse.py
   **拿一张你真实的结算截图来,我再按实际排版校准 `parse.py` 的关键词和裁剪。**
 - 英雄名清单在 `lol_coach/data/champions_zh.json`,可自行增删。
 
-## 后续(阶段二)
+## 阶段二:根据弱点推荐学习视频
 
-根据多局 JSON 累积出弱点趋势(如「视野长期偏低」),再去 B站/YouTube
-抓对应主题攻略做推荐。先把阶段一用顺。
+把阶段一某个周期的弱点,自动变成搜索词,去 **B站 + YouTube** 抓高质量视频、
+按播放量排序、按弱点分组推荐。
+
+**用法:把某个 `_汇总.json` 拖到 `推荐学习.bat`**(或命令行):
+
+```bash
+python -m lol_coach.learn.recommend data/matches/武器大师_6.10-6.20_汇总.json
+# --source bili,youtube   选择视频源
+# --per 4                 每个弱点推荐几个
+```
+
+输出按「弱点 → 搜索词 → 推荐视频(标题/UP/播放量/链接)」分组。把清单发我做取舍。
+
+**想总结某个视频**(YouTube 多有自动字幕,B站看有没有 CC):
+
+```bash
+python -m lol_coach.learn.subtitles "视频URL"
+```
+
+抓到的字幕文本贴给对话,我把它提炼成「针对你弱点的要点」。没字幕的视频会提示抓不到。
+
+> 依赖 `yt-dlp`(已在 requirements 里)。需要能访问 B站/YouTube。
 ```
