@@ -171,6 +171,60 @@ def test_recommend_orchestration_with_fake_search():
     assert calls, "应调用了搜索"
 
 
+def _fake_ddragon(champ_zh="武器大师", cid="Jax"):
+    """构造一个可注入的 Data Dragon getter,模拟官方 JSON 结构。"""
+    def getter(url, timeout=20):
+        if url.endswith("/api/versions.json"):
+            return ["14.10.1", "14.9.1"]
+        if "/champion.json" in url:
+            return {"data": {cid: {"name": champ_zh}, "Garen": {"name": "盖伦"}}}
+        if f"/champion/{cid}.json" in url:
+            return {"data": {cid: {
+                "title": "武器大师", "tags": ["Fighter"], "partype": "法力",
+                "passive": {"name": "致命打击"},
+                "spells": [
+                    {"name": "勇往直前", "cooldownBurn": "3.5", "costBurn": "65"},
+                    {"name": "气定神闲", "cooldownBurn": "9", "costBurn": "30"},
+                    {"name": "武器闪击", "cooldownBurn": "7", "costBurn": "30"},
+                    {"name": "无双剑姬", "cooldownBurn": "100", "costBurn": "100"},
+                ],
+                "stats": {"hp": 685, "armor": 36, "spellblock": 32,
+                          "attackdamage": 68, "movespeed": 350, "attackrange": 125},
+            }}}
+        raise AssertionError(f"未预期的 url: {url}")
+    return getter
+
+
+def test_scout_champion_facts():
+    from lol_coach.learn.scout import champion_facts
+    facts = champion_facts("武器大师", getter=_fake_ddragon())
+    assert facts["version"] == "14.10.1"
+    assert facts["id"] == "Jax"
+    assert [s["key"] for s in facts["spells"]] == ["Q", "W", "E", "R"]
+    assert facts["spells"][3]["name"] == "无双剑姬"
+    assert facts["base_stats"]["armor"] == 36
+
+
+def test_scout_unknown_champion():
+    from lol_coach.learn.scout import champion_facts
+    facts = champion_facts("不存在的英雄", getter=_fake_ddragon())
+    assert "error" in facts
+
+
+def test_build_brief_bundles_data_and_facts():
+    from lol_coach.learn.brief import build_brief
+    from lol_coach.learn.scout import champion_facts
+    summary = {"champion": "武器大师", "period": "6.10-6.20", "winrate": "100%",
+               "avg_cs_diff": -22, "avg_kp": 22.2}
+    getter = _fake_ddragon()
+    brief = build_brief(summary, rank="黄金",
+                        facts_getter=lambda c, version=None: champion_facts(c, getter=getter))
+    assert brief["我的段位"] == "黄金"
+    assert brief["我的数据"]["avg_cs_diff"] == -22
+    assert brief["当前版本事实"]["id"] == "Jax"
+    assert len(brief["请你分析"]) == 5
+
+
 def test_vtt_to_text():
     from lol_coach.learn.subtitles import _vtt_to_text
     vtt = (

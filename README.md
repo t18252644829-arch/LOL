@@ -137,4 +137,22 @@ python -m lol_coach.learn.subtitles "视频URL"
 抓到的字幕文本贴给对话,我把它提炼成「针对你弱点的要点」。没字幕的视频会提示抓不到。
 
 > 依赖 `yt-dlp`(已在 requirements 里)。需要能访问 B站/YouTube。
+
+## 阶段二(进阶):版本情报 + 个性化分析简报
+
+分工:**工具采集客观情报,AI 做分析。**
+
+- `learn/scout.py`:抓 Riot 官方 Data Dragon —— 英雄当前版本的技能/CD/消耗/被动/
+  基础数值/定位标签(中文)。国服版本慢,用 `--version` 锁国服客户端显示的版本号。
+- `learn/brief.py`:把「你的数据 + 当前版本事实 + 段位」打包成一份简报。
+
+**用法:把 `_汇总.json` 拖到 `分析简报.bat`**(会问你段位和版本号),或命令行:
+
+```bash
+python -m lol_coach.learn.scout 武器大师 --version 14.10
+python -m lol_coach.learn.brief data/matches/武器大师_6.10-6.20_汇总.json --rank 黄金 --version 14.10
+```
+
+把生成的简报整段发给对话,我据此产出:**生态位、装备天赋优先级、打法思路、
+对线要点、结合你段位与短板的实操成长路径**。
 ```
