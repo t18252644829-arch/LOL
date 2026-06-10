@@ -121,3 +121,112 @@ def parse_scoreboard(tokens: list[str], champions: list[str] | None = None) -> d
         out["wards_placed"] = wards
 
     return out
+
+
+# ---------------------------------------------------------------------------
+# 对位对比页(掌盟「战绩详情页 / 战局」):左右两个玩家并排,中间是标签。
+# 用 x 坐标把每行的值分到「你(左) / 对手(右)」,默认左=你。
+# ---------------------------------------------------------------------------
+
+# (标签子串, 输出字段名, 取值类型) —— 类型: int / percent / wards
+_VS_FIELDS = [
+    ("参团率", "kp", "percent"),
+    ("反眼", "wards", "wards"),          # "插/反眼" 列,值形如 6/0
+    ("最大多杀", "max_multikill", "int"),
+    ("补刀", "cs", "int"),
+    ("最大连杀", "max_spree", "int"),
+    ("推塔数", "towers", "int"),
+    ("总伤害", "dmg_to_champ", "int"),
+    ("物理伤害", "physical_dmg", "int"),
+    ("魔法伤害", "magic_dmg", "int"),
+    ("承受伤害", "dmg_taken", "int"),
+    ("回复生命", "healing", "int"),
+    ("经济", "gold", "int"),             # "对位经济差",值形如 6.1k
+]
+
+
+def _pick_value(items: list[dict], vtype: str):
+    """从同一行、某一侧的若干文本块里,按类型取出目标值。
+
+    伤害/经济这类行里同时有百分比和绝对值(如 "47.7%" 和 "8326"),
+    int 类型会跳过带 % 的块,只取绝对值。
+    """
+    for it in items:
+        t = it["text"]
+        if vtype == "percent":
+            m = re.search(r"(\d+(?:\.\d+)?)\s*%", t)
+            if m:
+                return float(m.group(1))
+        elif vtype == "wards":
+            m = re.search(r"\d+\s*/\s*\d+", t)
+            if m:
+                return m.group(0).replace(" ", "")
+        else:  # int —— 先抹掉百分比(如 47.7%),再取绝对数(支持 6.1k)
+            cleaned = re.sub(r"\d+(?:\.\d+)?\s*%", " ", t)
+            n = _first_number_in(cleaned)
+            if n is not None:
+                return n
+    return None
+
+
+def parse_versus(items: list[dict], side: str = "left",
+                 champions: list[str] | None = None, band: float = 28.0) -> dict:
+    """对位对比页解析:OCR 文本块(带坐标) -> 紧凑 dict(含你 vs 对手 + 差值)。
+
+    side: "left" 或 "right" —— 哪一列是「你」。掌盟里查自己战绩时你在左列。
+    band: 判定「同一行」的 y 像素容差。
+    """
+    champions = champions if champions is not None else load_champions()
+    out: dict = {}
+    if not items:
+        return out
+
+    # 胜负:结果条左侧标「我方胜利/失败」,右侧标「敌方…」
+    for it in items:
+        if "我方" in it["text"]:
+            out["result"] = "胜利" if "胜利" in it["text"] else (
+                "失败" if "失败" in it["text"] else None)
+            break
+
+    def beside(label: dict, vtype: str, want: str):
+        """居中标签:取同一行、左/右那一侧的值(下半部分伤害块)。"""
+        row = [it for it in items
+               if it is not label and abs(it["cy"] - label["cy"]) <= band]
+        left = sorted([it for it in row if it["cx"] < label["cx"]],
+                      key=lambda it: -it["cx"])   # 靠近标签的优先
+        right = sorted([it for it in row if it["cx"] > label["cx"]],
+                       key=lambda it: it["cx"])
+        mine_side, opp_side = (left, right) if side == "left" else (right, left)
+        return _pick_value(mine_side if want == "mine" else opp_side, vtype)
+
+    def above(label: dict, vtype: str, xtol: float = 60.0, ymax: float = 70.0):
+        """数字在标签正上方:取同列、紧挨在上的值(上半部分小格子)。"""
+        cand = [it for it in items
+                if it is not label and abs(it["cx"] - label["cx"]) < xtol
+                and 0 < (label["cy"] - it["cy"]) <= ymax]
+        cand.sort(key=lambda it: label["cy"] - it["cy"])  # 最近的在上面
+        return _pick_value(cand, vtype)
+
+    for substr, key, vtype in _VS_FIELDS:
+        labels = [it for it in items if substr in it["text"]]
+        if not labels:
+            continue
+        if len(labels) >= 2:
+            # 每侧各一个标签、数字在上方
+            labels.sort(key=lambda it: it["cx"])
+            mine_lbl = labels[0] if side == "left" else labels[-1]
+            opp_lbl = labels[-1] if side == "left" else labels[0]
+            mine, opp = above(mine_lbl, vtype), above(opp_lbl, vtype)
+        else:
+            # 居中单标签、数字在两侧
+            mine = beside(labels[0], vtype, "mine")
+            opp = beside(labels[0], vtype, "opp")
+        if mine is None:
+            continue
+        out[key] = mine
+        if opp is not None:
+            out[f"{key}_opp"] = opp
+            if vtype == "int":
+                out[f"{key}_diff"] = mine - opp
+
+    return out

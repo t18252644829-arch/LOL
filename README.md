@@ -26,28 +26,50 @@
 pip install -r requirements.txt   # 仅 OCR 层需要
 ```
 
+## 支持的页面
+
+- **对位详情页**(掌盟「战绩详情页 / 战局」,左右两个玩家对比)—— 数据最丰富,
+  自动识别。会抽出你 vs 对手的参团率、补刀、视野、伤害构成、经济差等,并算好差值。
+  **掌盟里查自己战绩时你在左列,工具默认锁左列为「你」**(`--side` 可改)。
+- **普通结算/数据页**(单人标签+数值)。
+
 ## 用法
 
 ```bash
-# 截图 → JSON(并自动存到 data/matches/)
-python -m lol_coach.extract 结算截图.png
+# 截图 → JSON(自动判断对位页 / 普通页,并存到 data/matches/)
+python -m lol_coach.extract 截图.png
 
-# OCR 漏识别时手动兜底
-python -m lol_coach.extract 结算截图.png --champion 亚索 --result 胜利
+# 强制对位模式 / 指定你在哪一侧
+python -m lol_coach.extract 截图.png --mode versus --side left
 
-# 无 paddle 环境 / 调试:直接喂 OCR 文本(每行一条)
-python -m lol_coach.extract --from-text ocr_lines.txt --no-save
+# OCR 漏识别英雄时兜底
+python -m lol_coach.extract 截图.png --champion 亚索
 ```
 
-输出示例:
+对位页输出示例(你=左,自带 `_opp` 对手值与 `_diff` 差值):
 
 ```json
 {
-  "result": "胜利", "champion": "亚索", "duration": "32:15", "duration_min": 32.25,
-  "kda": [8, 5, 7], "kda_ratio": 3.0, "cs": 245, "cs_per_min": 7.6,
-  "gold": 14200, "damage_dealt": 28500, "vision_score": 18, "wards_placed": 9
+  "result": "胜利", "kp": 22.2, "kp_opp": 50.0,
+  "wards": "6/0", "wards_opp": "3/0",
+  "cs": 117, "cs_opp": 139, "cs_diff": -22,
+  "dmg_to_champ": 8326, "dmg_to_champ_opp": 9100,
+  "gold": 6100, "gold_opp": 6700, "gold_diff": -600
 }
 ```
+
+## 校准(重要)
+
+OCR 字段映射依赖掌盟页面的实际排版。第一次用时,在你电脑上把识别到的
+**带坐标文本块**导出发我,我按真实坐标把 `parse.py` 调准:
+
+```python
+from lol_coach.ocr import ocr_items
+import json
+json.dump(ocr_items("截图.png"), open("items.json", "w"), ensure_ascii=False, indent=2)
+```
+
+然后 `python -m lol_coach.extract --from-items items.json` 可离线复跑解析。
 
 ## 测试
 
