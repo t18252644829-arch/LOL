@@ -46,6 +46,12 @@ def _avg(matches: list[dict], key: str):
     return round(sum(vals) / len(vals), 1) if vals else None
 
 
+def _avg_deaths(matches: list[dict]):
+    deaths = [m["kda"][1] for m in matches
+              if isinstance(m.get("kda"), list) and len(m["kda"]) == 3]
+    return round(sum(deaths) / len(deaths), 1) if deaths else None
+
+
 def summarize(champion: str, period: str | None, matches: list[dict]) -> dict:
     n = len(matches)
     wins = sum(1 for m in matches if m.get("result") == "胜利")
@@ -58,6 +64,7 @@ def summarize(champion: str, period: str | None, matches: list[dict]) -> dict:
         "avg_kp": _avg(matches, "kp"),
         "avg_cs": _avg(matches, "cs"),
         "avg_cs_diff": _avg(matches, "cs_diff"),
+        "avg_deaths": _avg_deaths(matches),
         "avg_dmg": _avg(matches, "dmg_to_champ"),
         "avg_gold_diff": _avg(matches, "gold_diff"),
     }

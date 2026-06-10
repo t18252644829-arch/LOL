@@ -18,7 +18,7 @@ from pathlib import Path
 TASKS_FILE = Path("data/tasks.json")
 
 # 可自动评估的指标(对应 batch 汇总里的字段)
-METRICS = {"avg_cs_diff", "avg_kp", "avg_gold_diff", "avg_cs"}
+METRICS = {"avg_cs_diff", "avg_kp", "avg_gold_diff", "avg_cs", "avg_deaths"}
 
 
 def _load(path: Path = TASKS_FILE) -> list[dict]:
