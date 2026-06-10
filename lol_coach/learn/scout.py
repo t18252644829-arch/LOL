@@ -46,6 +46,7 @@ def _compact_champion(version: str, name: str, cid: str, d: dict) -> dict:
         "version": version,
         "champion": name,
         "id": cid,
+        "key": d.get("key"),                   # 数字id,社区站(lolalytics等)用
         "title": d.get("title"),
         "tags": d.get("tags"),                 # Fighter / Tank / Mage ...
         "partype": d.get("partype"),           # 法力 / 能量 ...

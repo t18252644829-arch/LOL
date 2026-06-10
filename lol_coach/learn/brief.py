@@ -12,6 +12,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from .meta import fetch_meta
+from .patchnotes import fetch_patch_notes
 from .scout import champion_facts
 
 # 我要回答的分析维度(贴给对话后,我据此产出报告)
@@ -30,16 +32,23 @@ def _personal(summary: dict) -> dict:
     return {k: summary[k] for k in keys if k in summary}
 
 
-def build_brief(summary: dict, rank: str | None = None,
-                version: str | None = None, facts_getter=champion_facts) -> dict:
+def build_brief(summary: dict, rank: str | None = None, version: str | None = None,
+                lane: str | None = None, with_meta: bool = False,
+                with_patch: bool = False, facts_getter=champion_facts) -> dict:
     champ = (summary.get("champion") or "").strip()
     facts = facts_getter(champ, version=version) if champ else {}
-    return {
+    brief = {
         "我的段位": rank,
         "我的数据": _personal(summary),
         "当前版本事实": facts,
-        "请你分析": _QUESTIONS,
     }
+    use_version = facts.get("version") or version
+    if with_meta and lane and facts.get("key") and use_version:
+        brief["社区meta"] = fetch_meta(facts["key"], lane, use_version)
+    if with_patch and use_version:
+        brief["补丁说明"] = fetch_patch_notes(use_version)
+    brief["请你分析"] = _QUESTIONS
+    return brief
 
 
 def _load_summary(path: str) -> dict:
@@ -54,10 +63,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("summary", help="阶段一汇总 json")
     ap.add_argument("--rank", help="你的段位,如 黄金/铂金")
     ap.add_argument("--version", help="锁定版本号(国服客户端显示的)")
+    ap.add_argument("--lane", help="位置 top/jungle/mid/adc/support(抓社区meta需要)")
+    ap.add_argument("--meta", action="store_true", help="附带社区meta(易碎,需校准)")
+    ap.add_argument("--patch", action="store_true", help="附带官方补丁说明文本")
     args = ap.parse_args(argv)
 
     summary = _load_summary(args.summary)
-    brief = build_brief(summary, rank=args.rank, version=args.version)
+    brief = build_brief(summary, rank=args.rank, version=args.version,
+                        lane=args.lane, with_meta=args.meta, with_patch=args.patch)
     print(json.dumps(brief, ensure_ascii=False, indent=2))
     return 0
 

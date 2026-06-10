@@ -225,6 +225,34 @@ def test_build_brief_bundles_data_and_facts():
     assert len(brief["请你分析"]) == 5
 
 
+def test_patch_url_and_html_to_text():
+    from lol_coach.learn.patchnotes import patch_url, html_to_text, fetch_patch_notes
+    assert patch_url("14.10.1") == \
+        "https://www.leagueoflegends.com/en-us/news/game-updates/patch-14-10-notes/"
+    assert patch_url("14.10") == \
+        "https://www.leagueoflegends.com/en-us/news/game-updates/patch-14-10-notes/"
+    html = "<html><style>x{}</style><body><h1>Patch 14.10</h1><p>武器大师 Q 调整</p></body></html>"
+    assert html_to_text(html) == "Patch 14.10 武器大师 Q 调整"
+    # 注入 getter,验证抓取+截断逻辑
+    res = fetch_patch_notes("14.10", getter=lambda url, timeout=20: html, max_chars=5)
+    assert res["version"] == "14.10" and res["truncated"] is True
+
+
+def test_meta_url_and_parse():
+    from lol_coach.learn.meta import meta_url, norm_patch, parse_meta, fetch_meta
+    assert norm_patch("14.10.1") == "14.10"
+    url = meta_url("24", "top", "14.10")
+    assert "cid=24" in url and "lane=top" in url and "patch=14.10" in url
+    parsed = parse_meta({"header": {"wr": 51.2, "pr": 8.3, "br": 2.1, "n": 12000}})
+    assert parsed["winrate"] == 51.2 and parsed["games"] == 12000
+    # 未知结构应给出校准提示
+    assert "_note" in parse_meta({"weird": 1})
+    # 注入 getter
+    got = fetch_meta("24", "top", "14.10",
+                     getter=lambda url, timeout=25: {"header": {"wr": 50}})
+    assert got["winrate"] == 50 and "url" in got
+
+
 def test_vtt_to_text():
     from lol_coach.learn.subtitles import _vtt_to_text
     vtt = (

@@ -155,4 +155,17 @@ python -m lol_coach.learn.brief data/matches/武器大师_6.10-6.20_汇总.json 
 
 把生成的简报整段发给对话,我据此产出:**生态位、装备天赋优先级、打法思路、
 对线要点、结合你段位与短板的实操成长路径**。
+
+简报可附带两块情报:
+
+- `--patch`:`learn/patchnotes.py` 抓官方补丁说明文本,我读"这版改了什么、对你英雄有啥影响"。
+- `--meta --lane top`:`learn/meta.py` 抓社区站(lolalytics)tier/胜率/出装优先级/对线胜负。
+
+```bash
+python -m lol_coach.learn.brief 汇总.json --rank 黄金 --version 14.10 --lane top --meta --patch
+```
+
+> ⚠️ `meta.py` / `patchnotes.py` 是非官方网络爬取,站点结构会变,**最易碎、需校准**:
+> 第一次在你电脑上跑,把输出或报错发我,我按实际返回修 `parse_meta` / 抓取逻辑。
+> 校准用:`python -m lol_coach.learn.meta <数字id> top 14.10 --raw` 打印原始返回。
 ```
