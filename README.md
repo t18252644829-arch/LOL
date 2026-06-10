@@ -14,7 +14,7 @@
 
 | 层 | 文件 | 依赖 | 说明 |
 |----|------|------|------|
-| OCR | `lol_coach/ocr.py` | PaddleOCR(本地、离线、免费) | 截图 → 文本行 |
+| OCR | `lol_coach/ocr.py` | RapidOCR(本地、离线、免费;PaddleOCR 为备选) | 截图 → 文本行 |
 | 解析 | `lol_coach/parse.py` | 纯 Python | 文本行 → 紧凑 JSON,有单元测试 |
 | 入口 | `lol_coach/extract.py` | 串联上面两层 | 命令行 |
 
@@ -23,8 +23,10 @@
 ## 安装
 
 ```bash
-pip install -r requirements.txt   # 仅 OCR 层需要
+pip install -r requirements.txt   # 装 RapidOCR(自带中文模型,离线运行)
 ```
+
+第一次运行会用到内置模型,无需联网下载大文件。
 
 ## 支持的页面
 
