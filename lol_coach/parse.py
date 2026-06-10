@@ -229,4 +229,20 @@ def parse_versus(items: list[dict], side: str = "left",
             if vtype == "int":
                 out[f"{key}_diff"] = mine - opp
 
+    # 玩家 KDA(小卡片上的 击/死/助)。页面上的三段式数字里,最上面那个通常是
+    # 队伍总和,要排除;剩下左右各一个是两名玩家,按 side 取你那一侧。
+    kda_items = [it for it in items
+                 if re.fullmatch(r"\d+\s*[/／]\s*\d+\s*[/／]\s*\d+", it["text"].strip())]
+    if len(kda_items) >= 3:
+        kda_items.sort(key=lambda it: it["cy"])
+        kda_items = kda_items[1:]            # 去掉最上面的队伍总和
+    if kda_items:
+        kda_items.sort(key=lambda it: it["cx"])
+        mine_kda = kda_items[0] if side == "left" else kda_items[-1]
+        nums = [int(n) for n in re.findall(r"\d+", mine_kda["text"])]
+        if len(nums) == 3:
+            k, d, a = nums
+            out["kda"] = [k, d, a]
+            out["kda_ratio"] = round((k + a) / d, 2) if d else float(k + a)
+
     return out

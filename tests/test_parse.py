@@ -62,7 +62,8 @@ def test_parse_versus_real_layout():
     """模拟掌盟对位页(真实截图排版):上半=数字在标签上方且左右各一标签,
     下半=居中单标签两侧夹值。左列=你。"""
     items = [
-        _it("我方胜利 18/8/17", 150, 445),
+        _it("我方胜利", 150, 445), _it("18/8/17", 330, 445),  # 队伍总和(最上,排除)
+        _it("3/2/1", 110, 620), _it("2/3/2", 800, 620),       # 两名玩家 KDA
         # —— 上半块:value 在上(cy=1000/1090),label 在下(cy=1035/1125)
         _it("22.2%", 95, 1000), _it("参团率", 95, 1035),
         _it("6/0", 230, 1000), _it("插/反眼", 230, 1035),
@@ -102,6 +103,7 @@ def test_parse_versus_real_layout():
     assert d["dmg_taken"] == 10012 and d["dmg_taken_opp"] == 9909
     assert d["healing"] == 3719 and d["healing_opp"] == 2170
     assert d["gold"] == 6100 and d["gold_opp"] == 6700 and d["gold_diff"] == -600
+    assert d["kda"] == [3, 2, 1] and d["kda_ratio"] == 2.0  # 左=你,排除队伍总和
 
 
 def test_missing_fields_are_omitted():
