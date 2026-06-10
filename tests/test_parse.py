@@ -261,6 +261,42 @@ def test_meta_url_and_parse():
     assert "_note" in diag and diag["status"] == 404
 
 
+def test_tasks_evaluate():
+    from lol_coach.tasks import evaluate
+    summary = {"champion": "诺手", "avg_cs_diff": 3, "avg_kp": 30}
+    tasks = [
+        {"id": 1, "desc": "补刀不落后", "champion": "诺手",
+         "metric": "avg_cs_diff", "target": 0, "cmp": ">=", "status": "active"},
+        {"id": 2, "desc": "参团率到40", "champion": "诺手",
+         "metric": "avg_kp", "target": 40, "cmp": ">=", "status": "active"},
+        {"id": 3, "desc": "5层再交R(自评)", "champion": "诺手",
+         "metric": None, "target": None, "status": "active"},
+        {"id": 4, "desc": "别的英雄任务", "champion": "亚索",
+         "metric": "avg_cs_diff", "target": 0, "cmp": ">=", "status": "active"},
+    ]
+    res = evaluate(summary, tasks)
+    by_id = {r["id"]: r for r in res}
+    assert by_id[1]["met"] is True and by_id[1]["current"] == 3   # 3>=0 达成
+    assert by_id[2]["met"] is False                              # 30>=40 未达成
+    assert by_id[3]["met"] is None                               # 主观任务
+    assert 4 not in by_id                                        # 别的英雄不计入
+
+
+def test_tasks_add_list_roundtrip(tmp_path=None):
+    import tempfile
+    from pathlib import Path
+    from lol_coach import tasks as T
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "tasks.json"
+        T.add_task("补刀不落后", champion="诺手", metric="avg_cs_diff",
+                   target=0, path=p)
+        T.add_task("少送", champion="诺手", path=p)
+        rows = T.list_tasks(champion="诺手", path=p)
+        assert len(rows) == 2 and rows[0]["id"] == 1 and rows[1]["id"] == 2
+        T.set_status(1, "done", path=p)
+        assert len(T.list_tasks(champion="诺手", path=p)) == 1   # 只剩 active
+
+
 def test_vtt_to_text():
     from lol_coach.learn.subtitles import _vtt_to_text
     vtt = (

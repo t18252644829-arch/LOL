@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from ..tasks import evaluate as evaluate_tasks
 from .meta import fetch_meta
 from .patchnotes import fetch_patch_notes
 from .scout import champion_facts
@@ -41,6 +42,7 @@ def build_brief(summary: dict, rank: str | None = None, version: str | None = No
         "我的段位": rank,
         "我的位置": lane,
         "我的数据": _personal(summary),
+        "上次任务进度": evaluate_tasks(summary),
         "当前版本事实": facts,
     }
     use_version = facts.get("version") or version
