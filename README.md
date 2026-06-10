@@ -206,4 +206,3 @@ python -m lol_coach.learn.brief 汇总.json --rank 黄金 --version 26.10 --lane
 本地脚本与直连均 403,无法稳定爬取。**meta 改由对话里的助手用 WebSearch 获取**——
 你把简报发我、告诉我英雄和位置,我搜当前 meta 并结合补丁说明+你的数据出分析。
 (`learn/meta.py` 仅保留为实验性诊断工具,不进默认流程。)
-```
