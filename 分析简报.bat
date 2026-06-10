@@ -8,7 +8,7 @@ if "%~1"=="" (
 )
 set /p RANK=请输入你的段位(如 黄金/铂金): 
 set /p LANE=请输入位置(top/jungle/mid/adc/support): 
-set /p VER=国服客户端版本号(如 14.10,不知道就直接回车): 
+set /p VER=国服客户端版本号(如 26.10,不知道就直接回车): 
 py -3.12 --version
 if errorlevel 1 (
   set RUN=python
@@ -17,8 +17,8 @@ if errorlevel 1 (
 )
 set VERARG=
 if not "%VER%"=="" set VERARG=--version %VER%
-echo ====== 生成分析简报(含版本数值/社区meta/补丁说明) ======
-%RUN% -m lol_coach.learn.brief "%~1" --rank "%RANK%" --lane "%LANE%" %VERARG% --meta --patch
+echo ====== 生成分析简报(含版本数值/补丁说明) ======
+%RUN% -m lol_coach.learn.brief "%~1" --rank "%RANK%" --lane "%LANE%" %VERARG% --patch
 echo.
-echo 把上面整段简报复制发给对话,我就给你出完整分析。
+echo 把上面整段简报发给对话;meta(tier/胜率/出装)由我用搜索补上,你只要告诉我英雄和位置即可。
 pause

@@ -156,16 +156,16 @@ python -m lol_coach.learn.brief data/matches/武器大师_6.10-6.20_汇总.json 
 把生成的简报整段发给对话,我据此产出:**生态位、装备天赋优先级、打法思路、
 对线要点、结合你段位与短板的实操成长路径**。
 
-简报可附带两块情报:
+简报附带补丁情报:
 
-- `--patch`:`learn/patchnotes.py` 抓官方补丁说明文本,我读"这版改了什么、对你英雄有啥影响"。
-- `--meta --lane top`:`learn/meta.py` 抓社区站(lolalytics)tier/胜率/出装优先级/对线胜负。
+- `--patch`:`learn/patchnotes.py` 抓官方补丁说明文本(已验证可用),我读"这版改了什么、对你英雄有啥影响"。
 
 ```bash
-python -m lol_coach.learn.brief 汇总.json --rank 黄金 --version 14.10 --lane top --meta --patch
+python -m lol_coach.learn.brief 汇总.json --rank 黄金 --version 26.10 --lane top --patch
 ```
 
-> ⚠️ `meta.py` / `patchnotes.py` 是非官方网络爬取,站点结构会变,**最易碎、需校准**:
-> 第一次在你电脑上跑,把输出或报错发我,我按实际返回修 `parse_meta` / 抓取逻辑。
-> 校准用:`python -m lol_coach.learn.meta <数字id> top 14.10 --raw` 打印原始返回。
+**关于 tier/胜率/出装优先级(meta):** op.gg / lolalytics / u.gg 都有 Cloudflare 反爬,
+本地脚本与直连均 403,无法稳定爬取。**meta 改由对话里的助手用 WebSearch 获取**——
+你把简报发我、告诉我英雄和位置,我搜当前 meta 并结合补丁说明+你的数据出分析。
+(`learn/meta.py` 仅保留为实验性诊断工具,不进默认流程。)
 ```

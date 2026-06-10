@@ -39,6 +39,7 @@ def build_brief(summary: dict, rank: str | None = None, version: str | None = No
     facts = facts_getter(champ, version=version) if champ else {}
     brief = {
         "我的段位": rank,
+        "我的位置": lane,
         "我的数据": _personal(summary),
         "当前版本事实": facts,
     }
