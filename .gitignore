@@ -3,3 +3,4 @@ __pycache__/
 data/matches/*.json
 data/cache.json
 data/tasks.json
+data/profile.json

@@ -297,6 +297,26 @@ def test_tasks_add_list_roundtrip(tmp_path=None):
         assert len(T.list_tasks(champion="诺手", path=p)) == 1   # 只剩 active
 
 
+def test_profile_update_and_digest(tmp_path=None):
+    import tempfile
+    from pathlib import Path
+    from lol_coach import profile as P
+    from lol_coach import tasks as T
+    with tempfile.TemporaryDirectory() as d:
+        pf = Path(d) / "profile.json"
+        tf = Path(d) / "tasks.json"
+        md = Path(d) / "matches"
+        P.update(path=pf, lane="top", current_rank="未定级", goal_rank="白银",
+                 champion_pool=["诺手", "盖伦"])
+        T.add_task("补刀不落后", champion="诺手", metric="avg_cs_diff",
+                   target=0, path=tf)
+        dig = P.digest(profile_path=pf, matches_dir=md, tasks_path=tf)
+        assert dig["个人档案"]["lane"] == "top"
+        assert dig["个人档案"]["champion_pool"] == ["诺手", "盖伦"]
+        assert dig["最近一次对局"] is None          # 无数据时优雅为空
+        assert len(dig["当前任务"]) == 1
+
+
 def test_vtt_to_text():
     from lol_coach.learn.subtitles import _vtt_to_text
     vtt = (

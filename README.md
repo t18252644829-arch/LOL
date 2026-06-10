@@ -86,6 +86,19 @@ python -m lol_coach.batch "武器大师6.10-6.20"
 把同一英雄各周期串起来,按时间排序,显示补刀差/参团率/经济差是 **↑变好** 还是
 **↓变差**,以及总胜率。把输出发我即可得到长期成长诊断。
 
+## 个人档案(教练的记忆)
+
+我没有跨会话的长期记忆,`data/profile.json` 就是记忆载体:存你的分路/段位/目标/
+英雄池/定制计划。每次开始训练,双击 `教练简报.bat`(或 `python -m lol_coach.profile digest`)
+导出「档案+当前任务+最近对局」状态包,贴给对话,我就能接上。
+
+```bash
+python -m lol_coach.profile set --lane top --rank 未定级 --goal 白银 --pool 诺手,盖伦
+python -m lol_coach.profile plan "我的定制成长计划文本"
+python -m lol_coach.profile show
+python -m lol_coach.profile digest      # 导出状态包(教练简报.bat 即此)
+```
+
 ## 教练闭环(对局 → 数据 → 建议 → 任务 → 下一局)
 
 一个有记忆的循环:我布置成长任务,工具存下来,下一回合用你的数据自动核对进度。
